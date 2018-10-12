@@ -1,7 +1,13 @@
 # Getting Started
 Clone the repository, then:
-`npm i`
+~~~~
+npm i
+~~~~
 Run the server using:
-`npm start`
+~~~
+npm start
+~~~
 To run the tests:
-`npm test`
+~~~
+npm test
+~~~
