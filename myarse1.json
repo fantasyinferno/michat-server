@@ -1,0 +1,56 @@
+users: 
+    user1: 
+        uid: (user1's uid),
+        isInRooms: [
+            roomA: True,
+            roomB: True
+        ]
+    user2:
+        uid: (user2's uid),
+        isInRooms: [
+            roomA: True,
+            roomB: False
+        ]
+    user3:
+        uid: (user3's uid),
+        isInRooms: [
+            roomA: False,
+            roomB: True
+        ]
+rooms:
+	roomA:
+		name: "user1_user2",
+		messages:
+            message1:
+				content: "Hi",
+                sentAt: (some timestamp),
+                sender: (user1)
+			message2:
+                content: "Hello",
+                sentAt: (another timestamp),
+                sender: (user2)
+        users: 
+            user1:
+                uid: (uid of user1),
+                alias: "conbocuoi"
+            user2:
+                uid: (uid of user2),
+                alias: "thuythumattrang"
+    roomB:
+        name: "user1_user3",
+        messages:
+            message1:
+                content: "Will you marry me?",
+                sentAt: (a timestamp),
+                sender: (user1)
+            message2:
+                content: "no.",
+                sentAt: (the second timestamp),
+                sender: (user3)
+        users:
+            user1:
+                uid: (uid of user1),
+                alias: null
+            user2:
+                uid: (uid of user3),
+                alias: null
