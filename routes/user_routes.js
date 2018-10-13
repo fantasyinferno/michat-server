@@ -1,5 +1,6 @@
 module.exports = (app, admin) => {
     const {verifyIdTokenMiddleware} = require('./middlewares')(app, admin);    
+    let db = admin.firestore();
     app.get('/users/me', verifyIdTokenMiddleware, (req, res) => {
         let decodedToken = req.decodedToken;
         admin.auth().getUser(decodedToken.uid)
@@ -43,12 +44,31 @@ module.exports = (app, admin) => {
             console.log("Error deleting user:", error);
         });
     });
-    app.get('/users/ip', verifyIdTokenMiddleware, (req, res) => {
+    app.post('/users/ip', verifyIdTokenMiddleware, (req, res) => {
         let uid = req.decodedToken.uid;
-        let ip = req.socket.address().address;
-        let port = req.socket.address().port;
-        res.send({
-            uid, ip, port
+        let address = req.socket.address();
+        let setRef = db.collection('users').doc(req.decodedToken.uid).set({
+            ip: address.address,
+            port: address.port,
+        }, { merge: true });
+        res.send();
+    });
+    app.get('/users/ip/:email', (req, res) => {
+        let email = req.params.email;
+        admin.auth().getUserByEmail(email)
+        .then((userRecord) => {
+            let uid = userRecord.getUid();
+            return db.collection('users').doc(uid).get();
+        })
+        .then((doc) => {
+            let data = doc.data();
+            res.send({
+                ip: data.ip,
+                port: data.port,
+            });
+        })
+        .catch(e => {
+            console.log(e);
         });
     });
 };

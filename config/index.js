@@ -1,6 +1,6 @@
 let admin = require("firebase-admin");
 
-let serviceAccount = require("./michat-3ebcd-firebase-adminsdk-orivf-f1578d58a8.json");
+let serviceAccount = require("./service-account/michat-3ebcd-firebase-adminsdk-orivf-2afacfe1f9.json");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
