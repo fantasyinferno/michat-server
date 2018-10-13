@@ -1,8 +1,16 @@
+/** Express router providing user-related routes
+ * @module routers/users
+ * @requires express
+ * @requires async
+ */
 const async = require('async');
 module.exports = (app, admin) => {
     const {verifyIdTokenMiddleware} = require('./middlewares')(app, admin);
+    // get the firestore client
     let db = admin.firestore();
     db.settings({ timestampsInSnapshots: true });
+
+    
     app.get('/rooms', verifyIdTokenMiddleware, (req, res) => {
         db.collection('users').where("uid", "==", req.decodedToken.uid)
         .get()
