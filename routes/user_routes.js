@@ -97,9 +97,9 @@ module.exports = (app, admin) => {
      */
     app.post('/users/ip', verifyIdTokenMiddleware, (req, res) => {
         let uid = req.decodedToken.uid;
-        console.log(uid);
         ipPortObject = {
-            ip: req.connection.remoteAddress,
+            publicIp: req.get('x-forwarded-from'),
+            localIp: req.connection.remoteAddress,
             port: req.connection.remotePort,
         }
         let setRef = db.collection('users').doc(req.decodedToken.uid).set(ipPortObject, { merge: true });
