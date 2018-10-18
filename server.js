@@ -1,7 +1,7 @@
 const express = require('express');
 const admin = require('./config');
 const app = express();
-const port = 8000;
+const port =  process.env.PORT || 8000;
 const bodyParser = require('body-parser');
 app.use(bodyParser.json());
 
