@@ -98,7 +98,7 @@ module.exports = (app, admin) => {
     app.post('/users/ip', verifyIdTokenMiddleware, (req, res) => {
         let uid = req.decodedToken.uid;
         ipPortObject = {
-            publicIp: req.get('x-forwarded-from'),
+            publicIp: req.get('x-forwarded-for') || null,
             localIp: req.connection.remoteAddress,
             port: req.connection.remotePort,
         }
@@ -124,7 +124,8 @@ module.exports = (app, admin) => {
         .then((doc) => {
             let data = doc.data();
             res.send({
-                ip: data.ip,
+                publicIp: data.publicIp,
+                localIp: data.localIp,
                 port: data.port,
             });
         })
