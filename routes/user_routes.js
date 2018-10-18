@@ -97,10 +97,11 @@ module.exports = (app, admin) => {
      */
     app.post('/users/ip', verifyIdTokenMiddleware, (req, res) => {
         let uid = req.decodedToken.uid;
+        let localIp = req.body.localIp;
         ipPortObject = {
-            publicIp: req.get('x-forwarded-for') || null,
-            localIp: req.connection.remoteAddress,
-            port: req.connection.remotePort,
+            publicIp: req.get('x-forwarded-for') || req.connection.remoteAddress,
+            localIp: req.body.localIp || null,
+            port: req.get('x-forwarded-port') || req.connection.remotePort,
         }
         let setRef = db.collection('users').doc(req.decodedToken.uid).set(ipPortObject, { merge: true });
         res.send(ipPortObject);
