@@ -9,8 +9,6 @@ module.exports = (app, admin) => {
     // get the firestore client
     let db = admin.firestore();
     db.settings({ timestampsInSnapshots: true });
-
-    
     app.get('/rooms', verifyIdTokenMiddleware, (req, res) => {
         db.collection('users').where("uid", "==", req.decodedToken.uid)
         .get()

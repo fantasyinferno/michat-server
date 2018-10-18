@@ -10,7 +10,7 @@ module.exports = (app, admin) => {
      * @author fantasyinferno@gmail.com
      * @function
      * @memberof module: routers/users~usersRouter
-     * @inner
+     * @inner   
      * @param {string} path - Express path
      * @param {callback} middleware - Express middleware
      */
@@ -22,6 +22,7 @@ module.exports = (app, admin) => {
         })
         .catch(function(error) {
             console.log("Error fetching user data:", error);
+            res.status(400).send();
         });
     });
     /** Route for creating user
@@ -35,9 +36,10 @@ module.exports = (app, admin) => {
      */
     app.post('/users', (req, res) => {
         let userInfo = req.body;
+        console.log(req.body);
         admin.auth().createUser(userInfo)
             .then(function(userRecord) {
-              return res.send();
+                return res.json(userRecord);
             })
             .catch(function(error) {
               console.log("Error creating new user:", error);
@@ -95,11 +97,13 @@ module.exports = (app, admin) => {
      */
     app.post('/users/ip', verifyIdTokenMiddleware, (req, res) => {
         let uid = req.decodedToken.uid;
-        let setRef = db.collection('users').doc(req.decodedToken.uid).set({
+        console.log(uid);
+        ipPortObject = {
             ip: req.connection.remoteAddress,
             port: req.connection.remotePort,
-        }, { merge: true });
-        res.send();
+        }
+        let setRef = db.collection('users').doc(req.decodedToken.uid).set(ipPortObject, { merge: true });
+        res.send(ipPortObject);
     });
     /** Route serving user's ip and port
      * @name GET /users/ip/:email
@@ -128,5 +132,46 @@ module.exports = (app, admin) => {
             console.log(e);
             res.status(400).send();
         });
+    });
+    /*
+    1. Determine the messaging process
+The user opens the app. The user sees a sign in screen.
+The user signs in and see a welcome message.
+The user sees her list of rooms.
+The user accesses one of the rooms.
+The user composes her message.
+The user presses "Send".
+The user closes the chat box.
+The user opens another chat box.
+The user composes her message.
+The user closes that chat box.
+The user proceeds to add a new friend.
+The user enters the a person's name to the search bar.
+The user sees the results appear as she types.
+The user click on one of the friend.
+The user sees his profile.
+The user presses the "add friend" button.
+The user closes the search bar.
+The user sees a new chat box appears.
+The user clicks on the chat box's setting.
+The user click "Block"
+The user proceeds to confirm the blocking.
+The user sees the new chat box disappears.
+The user logs out.
+2. List the routers that are needed
+POST /users/signin
+GET /rooms/my
+GET /rooms/:id
+POST /rooms/:id
+GET /users?searchString=[searchString]
+GET /users/:id
+POST /users/friends
+POST /users/blocks
+POST /users/signout
+3. Implement the routers
+    */
+    app.get('/users', verifyIdTokenMiddleware, (req,res) => {
+        searchString = req.query.searchString;
+
     });
 };
