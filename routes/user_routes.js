@@ -1,7 +1,11 @@
 /** Express router providing user-related routes
  * @module routers/users
  * @requires express
+ * @requires axios
+ * @requires async
  */
+const axios = require('axios');
+const async = require('async');
 module.exports = (app, admin) => {
     const {verifyIdTokenMiddleware} = require('./middlewares')(app, admin);    
     let db = admin.firestore();
@@ -36,13 +40,13 @@ module.exports = (app, admin) => {
      */
     app.post('/users', (req, res) => {
         let userInfo = req.body;
-        console.log(req.body);
         admin.auth().createUser(userInfo)
             .then(function(userRecord) {
                 return res.json(userRecord);
             })
             .catch(function(error) {
               console.log("Error creating new user:", error);
+              res.status(400).send();
             });
     });
     /** Route for updating user's information
@@ -86,8 +90,9 @@ module.exports = (app, admin) => {
             console.log("Error deleting user:", error);
         });
     });
-    /** Route for registering user's ip and port
-     * @name POST /users/ip
+    
+    /** Route for getting online users
+     * @name GET /users/online
      * @author fantasyinferno@gmail.com
      * @function
      * @memberof module: routers/users~usersRouter
@@ -95,16 +100,95 @@ module.exports = (app, admin) => {
      * @param {string} path - Express path
      * @param {callback} middleware - Express middleware
      */
-    app.post('/users/ip', verifyIdTokenMiddleware, (req, res) => {
+    app.get('/users/online', verifyIdTokenMiddleware, (req, res) => {
+        db.collection('onlineUsers').where('isOnline', '==', true)
+        .get()
+        .then(snapshot => {
+            let userData = []; 
+            async.each(snapshot.docs, function(doc, callback) {
+                let uid = doc.id;
+                db.collection('users').doc(uid).get().then(userDoc => {
+                    userData.push(userDoc.data());
+                    callback();
+                });
+            }, function(err) {
+                if (err) {
+                    throw err;  
+                }
+                return res.send(userData);
+            });
+        })
+        .catch(e => {
+            console.log(e);
+            res.status(400).send();
+        });
+    });
+
+    /** Route for registering user's ip and port upon signing in
+     * @name POST /users/signin
+     * @author fantasyinferno@gmail.com
+     * @function
+     * @memberof module: routers/users~usersRouter
+     * @inner
+     * @param {string} path - Express path
+     * @param {callback} middleware - Express middleware
+     */
+    app.post('/users/signin', (req, res) => {
+        let email = req.body.email;
+        let password = req.body.password;
+        const APIKey = 'AIzaSyDu7vjq9CAKjeGSUQJi2ZxoVzgXcsyZ0qs';
+        let signInUrl = `https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword?key=${APIKey}`;
+        axios.post(signInUrl, {
+            email, password,
+            returnSecureToken: true,
+        })
+        .then(response => {   
+            let uid = response.data.localId;
+            let localIp = req.body.localIp;
+            networkInformation = {
+                publicIp: req.get('x-forwarded-for') || req.connection.remoteAddress,
+                localIp: req.body.localIp || null,
+                port: req.get('x-forwarded-port') || req.connection.remotePort,
+            }
+            db.collection('users').doc(uid).set(networkInformation, { merge: true });
+            db.collection('onlineUsers').doc(uid).set({isOnline: true}, {merge: true});
+            res.send({
+                userData: response.data,
+                networkInformation
+            }); 
+        })
+        .catch((error) => {
+            console.log(error);
+            res.status(400).send();
+        });
+    });
+    /** Route for registering user's ip and port upon signing in
+     * @name POST /users/signout
+     * @author fantasyinferno@gmail.com
+     * @function
+     * @memberof module: routers/users~usersRouter
+     * @inner
+     * @param {string} path - Express path
+     * @param {callback} middleware - Express middleware
+     */
+    app.post('/users/signout', verifyIdTokenMiddleware, (req, res) => {
+        // Revoke all refresh tokens for a specified user for whatever reason.
+        // Retrieve the timestamp of the revocation, in seconds since the epoch.
         let uid = req.decodedToken.uid;
-        let localIp = req.body.localIp;
-        ipPortObject = {
-            publicIp: req.get('x-forwarded-for') || req.connection.remoteAddress,
-            localIp: req.body.localIp || null,
-            port: req.get('x-forwarded-port') || req.connection.remotePort,
-        }
-        let setRef = db.collection('users').doc(req.decodedToken.uid).set(ipPortObject, { merge: true });
-        res.send(ipPortObject);
+        admin.auth().revokeRefreshTokens(uid)
+        .then(() => {
+            return admin.auth().getUser(uid);
+        })
+        .then((userRecord) => {
+            return new Date(userRecord.tokensValidAfterTime).getTime() / 1000;
+        })
+        .then((timestamp) => {
+            res.send({timestamp});
+        })
+        .catch(e => {
+            console.log(e);
+            res.status(400).send();
+        });
     });
     /** Route serving user's ip and port
      * @name GET /users/ip/:email
@@ -115,8 +199,8 @@ module.exports = (app, admin) => {
      * @param {string} path - Express path
      * @param {callback} middleware - Express middleware
      */
-    app.get('/users/ip/:email', (req, res) => {
-        let email = req.params.email;
+    app.get('/users/ip', verifyIdTokenMiddleware, (req, res) => {
+        let email = req.query.email;
         admin.auth().getUserByEmail(email)
         .then((userRecord) => {
             let uid = userRecord.uid;

@@ -7,39 +7,89 @@ const apiKey = 'AIzaSyDu7vjq9CAKjeGSUQJi2ZxoVzgXcsyZ0qs';
 const signInUrl = `https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword?key=${apiKey}`;
 
 describe('Test authentication', function() {
-  describe('Test creating new user', () => {
-    it('should create a new user', (done) => {
+  describe('Test signing in to the server', () => {
+    it('should sign in to the server', (done) => {
       chai.request(app)
-      .post('/users')
+      .post('/users/signin')
       .set('Content-Type', 'application/json')
       .send({
-        email: "createdemail03@invalidemail.com",
-        emailVerified: false,
-        phoneNumber: "+11234567890",
-        password: "createdpassword03",
-        displayName: "John Doe",
-        photoURL: "http://www.example.com/12345678/photo.png",
-        disabled: false
+        email: 'napoleon@france.com',
+        password: 'napoleon',
       })
-      .then((res) => {
+      .then(res => {
         res.status.should.equal(200);
         should.exist(res.body);
-        res.body.email.should.equal("createdemail03@invalidemail.com")
+        res.body.userData.email.should.equal("napoleon@france.com");
+        res.body.networkInformation.publicIp.should.be.a('string');
         done();
       })
-      .catch(err => {
-        done(err);
-      }); 
-    }).timeout(6000);
-  })
+      .catch(e => {
+        done(e);
+      });
+    }).timeout(20000);
+    it('should sign in a user and then sign out', (done) => {
+      chai.request(app)
+      .post('/users/signin')
+      .set('Content-Type', 'application/json')
+      .send({
+        email: 'napoleon@france.com',
+        password: 'napoleon',
+      })
+      .then(res => {
+        res.status.should.equal(200);
+        should.exist(res.body);
+        res.body.userData.email.should.equal("napoleon@france.com");
+        res.body.networkInformation.publicIp.should.be.a('string');
+        return chai.request(app)
+        .post('/users/signout')
+        .set('Access-Token', res.body.userData.idToken)
+        .send();
+      })
+      .then(res => {
+        res.status.should.equal(200);
+        should.exist(res.body);
+        should.exist(res.body.timestamp);
+        res.body.timestamp.should.be.a('number');
+        done();
+      })
+      .catch(e => {
+        done(e);
+      });
+    }).timeout(10000);
+  });
+  // describe('Test creating new user', () => {
+  //   it('should create a new user', (done) => {
+  //     chai.request(app)
+  //     .post('/users')
+  //     .set('Content-Type', 'application/json')
+  //     .send({
+  //       email: "createdemail03@invalidemail.com",
+  //       emailVerified: false,
+  //       phoneNumber: "+11234567890",
+  //       password: "createdpassword03",
+  //       displayName: "John Doe",
+  //       photoURL: "http://www.example.com/12345678/photo.png",
+  //       disabled: false
+  //     })
+  //     .then((res) => {
+  //       res.status.should.equal(200);
+  //       should.exist(res.body);
+  //       res.body.email.should.equal("createdemail03@invalidemail.com")
+  //       done();
+  //     })
+  //     .catch(err => {
+  //       done(err);
+  //     }); 
+  //   }).timeout(6000);
+  // })
   describe('Test getting user data', () => {
     it('should respond with user data', (done) => {
       chai.request(signInUrl)
       .post('')
       .set('Content-Type', 'application/json')
       .send({
-        "email": "createdemail01@invalidemail.com",
-        "password": "createdpassword01",
+        "email": "napoleon@france.com",
+        "password": "napoleon",
         "returnSecureToken": true
       })
       .then((res) => {
@@ -54,22 +104,49 @@ describe('Test authentication', function() {
       .then((res) => {
         res.status.should.equal(200);
         should.exist(res.body);
-        res.body.email.should.equal("createdemail01@invalidemail.com");
+        res.body.email.should.equal("napoleon@france.com");
         done();
       })
       .catch(err => {
         done(err);
       }); 
     }).timeout(6000);
-  })
+    it('should return the list of user who is online', (done) => {
+        chai.request(signInUrl)
+        .post('')
+        .set('Content-Type', 'application/json')
+        .send({
+          "email": "napoleon@france.com",
+          "password": "napoleon",
+          "returnSecureToken": true
+        })
+        .then((res) => {
+          res.status.should.equal(200);
+          should.exist(res.body);
+          let idToken = res.body.idToken;
+          idToken.should.be.a('string');
+          return chai.request(app)
+          .get('/users/online')
+          .set('Access-Token', idToken);
+        })
+        .then((res) => {
+          res.status.should.equal(200);
+          res.body.should.be.a('array');
+          done();
+        })
+        .catch(err => {
+          done(err);
+        });
+      }).timeout(10000);
+    });
   describe('Test ip and port processing', () => {
     it('should report the port and the ip', (done) => {
       chai.request(signInUrl)
       .post('')
       .set('Content-Type', 'application/json')
       .send({
-        "email": "createdemail01@invalidemail.com",
-        "password": "createdpassword01",
+        "email": "napoleon@france.com",
+        "password": "napoleon",
         "returnSecureToken": true
       })
       .then((res) => {
@@ -78,7 +155,7 @@ describe('Test authentication', function() {
         let idToken = res.body.idToken;
         idToken.should.be.a('string');
         return chai.request(app)
-        .post('/users/ip')
+        .get('/users/ip?email=napoleon@france.com')
         .set('Access-Token', idToken);
       })
       .then((res) => {
