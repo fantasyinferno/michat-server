@@ -4,7 +4,8 @@ let serviceAccount = require("./service-account/michat-3ebcd-firebase-adminsdk-o
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  databaseURL: "https://michat-3ebcd.firebaseio.com"
+  databaseURL: "https://michat-3ebcd.firebaseio.com",
+  storageBucket: "michat-3ebcd.appspot.com",
 });
 
 module.exports = admin;

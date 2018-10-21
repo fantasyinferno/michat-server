@@ -3,8 +3,10 @@
  * @requires express
  * @requires axios
  * @requires async
+ * @requires lodash
  */
 const axios = require('axios');
+const _ = require('lodash');
 const async = require('async');
 module.exports = (app, admin) => {
     const {verifyIdTokenMiddleware} = require('./middlewares')(app, admin);    
@@ -39,10 +41,14 @@ module.exports = (app, admin) => {
      * @param {callback} middleware - Express middleware
      */
     app.post('/users', (req, res) => {
-        let userInfo = req.body;
-        admin.auth().createUser(userInfo)
+        let body = req.body;
+        let firebaseUserInfo = _.pick(body, ['disabled', 'displayName', 'email', 'emailVerified', 'password', 'phoneNumber', 'photoURL', 'uid']);
+        let additionalUserInfo = _.pick(body, ['ngaySinh', 'role', 'name', 'gioiTinh']);
+        admin.auth().createUser(firebaseUserInfo)
             .then(function(userRecord) {
-                return res.json(userRecord);
+                db.collection('users').doc(userRecord.uid)
+                .set(additionalUserInfo,{merge: true});
+                res.send(userRecord);
             })
             .catch(function(error) {
               console.log("Error creating new user:", error);
@@ -60,14 +66,19 @@ module.exports = (app, admin) => {
      */
     app.patch('/users/:uid', (req, res) => {
         let uid = req.params.uid;
-        let userInfo = req.body;
-        admin.auth().updateUser(uid, userInfo)
+        let body = req.body;
+        let firebaseUserInfo = _.pick(body, ['disabled', 'displayName', 'email', 'emailVerified', 'password', 'phoneNumber', 'photoURL', 'uid']);
+        let additionalUserInfo = _.pick(body, ['ngaySinh', 'role', 'name', 'gioiTinh']);
+        admin.auth().updateUser(uid, firebaseUserInfo)
             .then(function(userRecord) {
               // See the UserRecord reference doc for the contents of userRecord.
-              console.log("Successfully updated user", userRecord.toJSON());
+              db.collection('users').doc(userRecord.uid)
+              .set(additionalUserInfo,{merge: true});
+              res.send(userRecord);
             })
             .catch(function(error) {
               console.log("Error updating user:", error);
+              res.status(400).send();
             });
     });
     /** Route for deleting a user
