@@ -24,6 +24,11 @@ module.exports = (app, admin) => {
         let decodedToken = req.decodedToken;
         admin.auth().getUser(decodedToken.uid)
         .then(function(userRecord) {
+            userRecord.name = "";
+            userRecord.avatar = "";
+            userRecord.role = "";
+            userRecord.gioiTinh = "";
+            userRecord.ngaySinh = "";
             return res.json(userRecord.toJSON());
         })
         .catch(function(error) {
