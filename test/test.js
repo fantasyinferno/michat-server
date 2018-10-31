@@ -5,6 +5,7 @@ const should = chai.should();
 const {app, admin} = require('../server');
 const apiKey = 'AIzaSyDu7vjq9CAKjeGSUQJi2ZxoVzgXcsyZ0qs';
 const signInUrl = `https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword?key=${apiKey}`;
+const fs = require('fs');
 
 describe('Test authentication', function() {
   describe('Test signing in to the server', () => {
@@ -19,8 +20,6 @@ describe('Test authentication', function() {
       .then(res => {
         res.status.should.equal(200);
         should.exist(res.body);
-        res.body.userData.email.should.equal("napoleon@france.com");
-        res.body.networkInformation.publicIp.should.be.a('string');
         done();
       })
       .catch(e => {
@@ -38,11 +37,9 @@ describe('Test authentication', function() {
       .then(res => {
         res.status.should.equal(200);
         should.exist(res.body);
-        res.body.userData.email.should.equal("napoleon@france.com");
-        res.body.networkInformation.publicIp.should.be.a('string');
         return chai.request(app)
         .post('/users/signout')
-        .set('Access-Token', res.body.userData.idToken)
+        .set('Access-Token', res.body.idToken)
         .send();
       })
       .then(res => {
@@ -160,6 +157,37 @@ describe('Test authentication', function() {
       })
       .then((res) => {
         res.status.should.equal(200);
+        done();
+      })
+      .catch(err => {
+        done(err);
+      });
+    }).timeout(10000);
+  })
+  describe('Sending file to the server', () => {
+    it('should upload a file to the server and get a link back', (done) => {
+      chai.request(signInUrl)
+      .post('')
+      .set('Content-Type', 'application/json')
+      .send({
+        "email": "napoleon@france.com",
+        "password": "napoleon",
+        "returnSecureToken": true
+      })
+      .then((res) => {
+        res.status.should.equal(200);
+        should.exist(res.body);
+        let idToken = res.body.idToken;
+        idToken.should.be.a('string');
+        return chai.request(app)
+        .post('/files')
+        .set('Access-Token', idToken)
+        .attach('attachment', fs.readFileSync('./test/avatar.png'), 'avatar.png');
+      })
+      .then((res) => {
+        res.status.should.equal(200);
+        should.exist(res.body);
+        res.body.fileUrl.should.be.a('string');
         done();
       })
       .catch(err => {

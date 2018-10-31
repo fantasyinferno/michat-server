@@ -30,9 +30,10 @@ module.exports = (app, admin) => {
      * @param {string} path - Express path
      * @param {callback} middleware - Express middleware
      */
-    app.post('/files', upload.single('attachment'), verifyIdTokenMiddleware, (req, res) => {
+    app.post('/files', upload.single('attachment'), (req, res) => {
+
         bucket.upload(req.file.path, {
-            destination: `${req.decodedToken.uid}/${uuidv1()}`, // generate a unique file name
+            destination: `${uuidv1()}`, // generate a unique file name
             gzip: true,
         })
         .then(uploadResponse => {
@@ -43,7 +44,7 @@ module.exports = (app, admin) => {
             })
         })
         .then(signedUrls => {
-            res.send(signedUrls[0]);
+            res.send({fileUrl: signedUrls[0]});
         })
         .catch(e => {
             console.log(e);

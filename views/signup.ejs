@@ -1,0 +1,142 @@
+<html>
+<head>
+    <title>Sign up</title>
+    <link href="/style.css" rel="stylesheet" type="text/css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+        crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="container">
+        <!--
+        let firebaseUserInfo = _.pick(body, ['disabled', 'displayName', 'email', 'emailVerified', 'password', 'phoneNumber', 'photoURL', 'uid']);
+        let additionalUserInfo = _.pick(body, ['ngaySinh', 'role', 'name', 'gioiTinh']);
+    -->
+        <form method="POST" action="/users">
+            <div class="row">
+                <h4>Account</h4>
+                <div class="input-group input-group-icon">
+                    <input type="text" name="name" placeholder="Username" />
+                    <div class="input-icon">
+                        <i class="fa fa-user"></i>
+                    </div>
+                </div>
+                <div class="input-group input-group-icon">
+                    <input type="text" name="displayName" placeholder="Full Name" />
+                    <div class="input-icon">
+                        <i class="fa fa-user"></i>
+                    </div>
+                </div>
+                <div class="input-group input-group-icon">
+                    <input type="email" name="email" placeholder="Email Adress" />
+                    <div class="input-icon">
+                        <i class="fa fa-envelope"></i>
+                    </div>
+                </div>
+                <div class="input-group input-group-icon">
+                    <input type="password" name="password" placeholder="Password" />
+                    <div class="input-icon">
+                        <i class="fa fa-key"></i>
+                    </div>
+                </div>
+                <div class="input-group input-group-icon">
+                    <input type="text" name="photoURL" placeholder="Photo's URL" />
+                    <div class="input-icon">
+                        <i class="fa fa-user"></i>
+                    </div>
+                </div>
+                <label for="image">Or upload your photo:</label>
+                <input type="file" accept="image/*" name="pic" id="image">                 
+            </div>
+            <div class="row">
+                <div class="col-half">
+                    <h4>Date of Birth</h4>
+                    <div class="input-group">
+                        <div class="col-third">
+                            <input type="text" name="day" placeholder="DD" />
+                        </div>
+                        <div class="col-third">
+                            <input type="text" name="month" placeholder="MM" />
+                        </div>
+                        <div class="col-third">
+                            <input type="text" name="year" placeholder="YYYY" />
+                        </div>
+                    </div>
+                </div>
+                <div class="col-half">
+                    <h4>Gender</h4>
+                    <div class="input-group">
+                        <input type="radio" name="gioiTinh" value="male" id="gender-male" />
+                        <label for="gender-male">Male</label>
+                        <input type="radio" name="gioiTinh" value="female" id="gender-female" />
+                        <label for="gender-female">Female</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <h4>Terms and Conditions</h4>
+                <div class="input-group">
+                    <input type="checkbox" id="terms" />
+                    <label for="terms">I accept the terms and conditions for signing up to this service, and hereby confirm I have read the
+                        privacy policy.</label>
+                </div>
+                <div class="input-group">
+                    <input type="submit" text="Register!" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="input-group">
+                    <i id="result-icon"></i>
+                    <label id="result"></label>
+                </div>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
+<script>
+    let transform = function (formData) {
+        ngaySinh = new Date(formData.get('year'), formData.get('month') - 1, formData.get('day')).getTime();
+        console.log(formData);
+        formData.append("ngaySinh", ngaySinh);
+        return formData;
+    }
+    $('#image').on('change', function() {
+        let file = $('#image')[0].files[0];
+        let formData = new FormData();
+        formData.append('attachment', file);
+        $.post({
+            url: '/files',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(res) {
+                $('input[name="photoURL"]').val(res.fileUrl);
+            },
+            error: function(res) {
+                $('input[name="photoURL"]').val('Failed to upload image.');
+            }
+        });
+    });
+    $('form').submit(function (e) {
+        e.preventDefault();
+        var $this = $(this);
+        var formData = new FormData($this[0]);
+        console.log(formData);
+        // do some thing to it
+        var yourData = transform(formData);
+        $.ajax({
+            post: $this.attr('action'),
+            data: yourData,
+            url: '/users',
+            success: function (res) {
+                $('#result').css("class","fas fa-check-square");
+            },
+            error: function (err) {
+                $('#result').css("class","fas fa-times-square");
+            }
+        });
+    });
+    
+</script>

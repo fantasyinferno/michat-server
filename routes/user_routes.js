@@ -154,18 +154,19 @@ module.exports = (app, admin) => {
             returnSecureToken: true,
         })
         .then(response => {   
-            let uid = response.data.localId;
-            let localIp = req.body.localIp;
-            networkInformation = {
-                publicIp: req.get('x-forwarded-for') || req.connection.remoteAddress,
-                localIp: req.body.localIp || null,
-                port: req.get('x-forwarded-port') || req.connection.remotePort,
-            }
-            db.collection('users').doc(uid).set(networkInformation, { merge: true });
-            db.collection('onlineUsers').doc(uid).set({isOnline: true}, {merge: true});
+            // let uid = response.data.localId;
+            // let localIp = req.body.localIp;
+            // networkInformation = {
+            //     publicIp: req.get('x-forwarded-for') || req.connection.remoteAddress,
+            //     localIp: req.body.localIp || null,
+            //     port: req.get('x-forwarded-port') || req.connection.remotePort,
+            // }
+            // db.collection('users').doc(uid).set(networkInformation, { merge: true });
+            // db.collection('onlineUsers').doc(uid).set({isOnline: true}, {merge: true});
             res.send({
-                userData: response.data,
-                networkInformation
+                idToken: response.data.idToken,
+                refreshToken: response.data.refreshToken,
+                // networkInformation
             }); 
         })
         .catch((error) => {
@@ -210,7 +211,7 @@ module.exports = (app, admin) => {
      * @param {string} path - Express path
      * @param {callback} middleware - Express middleware
      */
-    app.get('/users/ip', verifyIdTokenMiddleware, (req, res) => {
+    app.get('/users/ip', (req, res) => {
         let email = req.query.email;
         admin.auth().getUserByEmail(email)
         .then((userRecord) => {
@@ -229,6 +230,10 @@ module.exports = (app, admin) => {
             console.log(e);
             res.status(400).send();
         });
+    });
+
+    app.get('/users/signup', (req, res) => {
+        res.render('signup');
     });
     /*
     1. Determine the messaging process
@@ -267,8 +272,4 @@ POST /users/blocks
 POST /users/signout
 3. Implement the routers
     */
-    app.get('/users', verifyIdTokenMiddleware, (req,res) => {
-        searchString = req.query.searchString;
-
-    });
 };
