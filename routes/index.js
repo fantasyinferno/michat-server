@@ -1,6 +1,7 @@
 const userRoutes = require('./user_routes');
 const roomRoutes = require('./room_routes');
 const fileRoutes = require('./file_routes');
+const otherRoutes = require('./other_routes');
 /*
 API specifications
 - GET /users: retrieve a user (require authentication proof)
@@ -13,4 +14,5 @@ module.exports = (app, admin) => {
     userRoutes(app, admin);
     roomRoutes(app, admin);
     fileRoutes(app, admin);
+    otherRoutes(app, admin);
 }
