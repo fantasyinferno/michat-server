@@ -85,24 +85,28 @@
                     <input type="submit" text="Register!" />
                 </div>
             </div>
-            <div class="row">
-                <div class="input-group">
-                    <i id="result-icon"></i>
-                    <label id="result"></label>
-                </div>
-            </div>
         </form>
+        <div class="row">
+            <i id="result-icon"></i>
+            <label id="result"></label>
+        </div>
     </div>
 </body>
 </html>
 <script>
+    function getFormData($form){
+        var unindexed_array = $form.serializeArray();
+        var indexed_array = {};
+        $.map(unindexed_array, function(n, i){
+            indexed_array[n['name']] = n['value'];
+        });
+        return indexed_array;
+    }
     let transform = function (formData) {
-        ngaySinh = new Date(formData.get('year'), formData.get('month') - 1, formData.get('day')).getTime();
-        console.log(formData);
-        formData.append("ngaySinh", ngaySinh);
+        formData.ngaySinh = new Date(formData.year, formData.month - 1, formData.day).getTime();
         return formData;
     }
-    $('#image').on('change', function() {
+    $('#image').on('change', function()  {
         let file = $('#image')[0].files[0];
         let formData = new FormData();
         formData.append('attachment', file);
@@ -122,19 +126,25 @@
     $('form').submit(function (e) {
         e.preventDefault();
         var $this = $(this);
-        var formData = new FormData($this[0]);
-        console.log(formData);
+        var formData = getFormData($this);
         // do some thing to it
         var yourData = transform(formData);
-        $.ajax({
-            post: $this.attr('action'),
+        console.log(yourData); 
+        $.post({
             data: yourData,
             url: '/users',
             success: function (res) {
-                $('#result').css("class","fas fa-check-square");
+                $('form').hide();
+                $('#result-icon').addClass("fa fa-check-square");
+                $('#result-icon').addClass('green-status-text');
+                $('#result').text("Success!")
+                $('#result').addClass('green-status-text');
             },
             error: function (err) {
-                $('#result').css("class","fas fa-times-square");
+                $('#result-icon').css("class","fa fa-times-square");
+                $('#result-icon').addClass('red-status-text');
+                $('#result').text("Failure!")
+                $('#result').addClass('red-status-text');
             }
         });
     });

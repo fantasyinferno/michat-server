@@ -24,12 +24,43 @@ module.exports = (app, admin) => {
         let decodedToken = req.decodedToken;
         admin.auth().getUser(decodedToken.uid)
         .then(function(userRecord) {
-            userRecord.name = "";
-            userRecord.avatar = "";
-            userRecord.role = "";
-            userRecord.gioiTinh = "";
-            userRecord.ngaySinh = "";
-            return res.json(userRecord.toJSON());
+            db.collection('users').doc(decodedToken.uid)
+            .get()
+            .then(function(doc) {
+                data = doc.data();
+                merged = {...userRecord, ...data}
+                return res.send(merged);  
+            })
+        })
+        .catch(function(error) {
+            console.log("Error fetching user data:", error);
+            res.status(400).send();
+        });
+    });
+    /** Route serving user's personal information
+     * @name GET /users
+     * @author fantasyinferno@gmail.com
+     * @function
+     * @memberof module: routers/users~usersRouter
+     * @inner   
+     * @param {string} path - Express path
+     * @param {callback} middleware - Express middleware
+     */
+    app.get('/users', verifyIdTokenMiddleware, (req, res) => {
+        let name = req.query.name;
+        let decodedToken = req.decodedToken;
+        let data = {};
+        db
+        .collection('users')
+        .where("name", "==", name)
+        .get()
+        .then(function(query) {
+            data = query.docs[0].data();
+            return admin.auth().getUser(query.docs[0].id)
+        })
+        .then(function(userRecord) {
+            merged = {...userRecord, ...data}            
+            res.send(merged);
         })
         .catch(function(error) {
             console.log("Error fetching user data:", error);
@@ -44,7 +75,7 @@ module.exports = (app, admin) => {
      * @inner
      * @param {string} path - Express path
      * @param {callback} middleware - Express middleware
-     */
+     */ 
     app.post('/users', (req, res) => {
         let body = req.body;
         let firebaseUserInfo = _.pick(body, ['disabled', 'displayName', 'email', 'emailVerified', 'password', 'phoneNumber', 'photoURL', 'uid']);
@@ -99,7 +130,6 @@ module.exports = (app, admin) => {
         let uid = req.params.uid;
         admin.auth().deleteUser(uid)
         .then(function() {
-            console.log("Successfully deleted user");
             return res.send();
         })
         .catch(function(error) {
@@ -194,7 +224,10 @@ module.exports = (app, admin) => {
         let uid = req.decodedToken.uid;
         admin.auth().revokeRefreshTokens(uid)
         .then(() => {
-            return admin.auth().getUser(uid);
+            db.collection('onlineUsers').doc(uid).set({
+                isOnline: false,
+            });
+            return admin.auth().getUser(uid);            
         })
         .then((userRecord) => {
             return new Date(userRecord.tokensValidAfterTime).getTime() / 1000;

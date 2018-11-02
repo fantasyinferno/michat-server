@@ -172,7 +172,7 @@ select option {
 }
 .container {
   max-width: 38em;
-  padding: 1em 3em 2em 3em;
+  padding: 1em 3em 1em 3em;
   margin: 0em auto;
   background-color: #fff;
   border-radius: 4.2px;
@@ -210,4 +210,11 @@ select option {
     width: 100%;
     padding-right: 0;
   }
+}
+.green-status-text {
+  color: greenyellow;
+  font-size: 200%;
+}
+.red-status-text {
+  color: red;
 }

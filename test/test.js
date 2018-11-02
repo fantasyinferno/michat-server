@@ -85,8 +85,8 @@ describe('Test authentication', function() {
       .post('')
       .set('Content-Type', 'application/json')
       .send({
-        "email": "napoleon@france.com",
-        "password": "napoleon",
+        "email": "tuankiet@gmail.com",
+        "password": "tuankiet",
         "returnSecureToken": true
       })
       .then((res) => {
@@ -96,18 +96,57 @@ describe('Test authentication', function() {
         idToken.should.be.a('string');
         return chai.request(app)
         .get('/users/me')
-        .set('Access-Token', idToken);
+        .set('Access-Token', idToken)
+        .send();
       })
       .then((res) => {
         res.status.should.equal(200);
         should.exist(res.body);
-        res.body.email.should.equal("napoleon@france.com");
+        res.body.name.should.be.a('string');
+        res.body.email.should.equal("tuankiet@gmail.com");
+        res.body.displayName.should.equal("Lương Tuấn Kiệt");
+        res.body.name.should.equal("tuankiet");
         done();
       })
       .catch(err => {
         done(err);
       }); 
     }).timeout(6000);
+    it('should respond with another user data', (done) => {
+      chai.request(signInUrl)
+      .post('')
+      .set('Content-Type', 'application/json')
+      .send({
+        "email": "tuankiet@gmail.com",
+        "password": "tuankiet",
+        "returnSecureToken": true
+      })
+      .then((res) => {
+        res.status.should.equal(200);
+        should.exist(res.body);
+        let idToken = res.body.idToken;
+        idToken.should.be.a('string');
+        return chai.request(app)
+        .get('/users')
+        .set('Access-Token', idToken)
+        .query({
+          name: 'quanghuy'
+        })
+        .send();
+      })
+      .then((res) => {
+        res.status.should.equal(200);
+        should.exist(res.body);
+        res.body.name.should.be.a('string');
+        res.body.email.should.equal("quanghuy@gmail.com");
+        res.body.displayName.should.equal("Nguyễn Khắc Quang Huy");
+        res.body.name.should.equal("quanghuy");
+        done();
+      })
+      .catch(err => {
+        done(err);
+      }); 
+    }).timeout(15000);
     it('should return the list of user who is online', (done) => {
         chai.request(signInUrl)
         .post('')
