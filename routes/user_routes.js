@@ -11,14 +11,31 @@ const async = require('async');
 module.exports = (app, admin) => {
     const {verifyIdTokenMiddleware} = require('./middlewares')(app, admin);    
     let db = admin.firestore();
-    /** Route serving user's personal information
-     * @name GET /users/me
-     * @author fantasyinferno@gmail.com
-     * @function
-     * @memberof module: routers/users~usersRouter
-     * @inner   
-     * @param {string} path - Express path
-     * @param {callback} middleware - Express middleware
+    /**
+     * @api {get} /users/me Request Signed-In User information
+     * @apiName GetMyUser
+     * @apiGroup User
+     *
+     *
+     * @apiSuccess {Object} customClaims 
+     * @apiSuccess {Boolean} disabled 
+     * @apiSuccess {String} displayName
+     * @apiSuccess {String} email
+     * @apiSuccess {Boolean} emailVerified 
+     * @apiSuccess {Object} metadata
+     * @apiSuccess {String} passwordHash
+     * @apiSuccess {String} passwordSalt
+     * @apiSuccess {String} phoneNumber
+     * @apiSuccess {String} photoURL
+     * @apiSuccess {String} providerData
+     * @apiSuccess {Array} tokensValidAfterTime
+     * @apiSuccess {String} uid
+     * @apiSuccess {String} name
+     * @apiSuccess {String} ngaySinh
+     * @apiSuccess {String} gioiTinh
+     * @apiSuccess {String} role
+     * 
+     * 
      */
     app.get('/users/me', verifyIdTokenMiddleware, (req, res) => {
         let decodedToken = req.decodedToken;
@@ -37,14 +54,92 @@ module.exports = (app, admin) => {
             res.status(400).send();
         });
     });
-    /** Route serving user's personal information
-     * @name GET /users
-     * @author fantasyinferno@gmail.com
-     * @function
-     * @memberof module: routers/users~usersRouter
-     * @inner   
-     * @param {string} path - Express path
-     * @param {callback} middleware - Express middleware
+    /**
+     * @api {get} /users/all List all users
+     * @apiName GetAllUsers
+     * @apiGroup User
+     *
+     *
+     * @apiSuccess {Object} customClaims 
+     * @apiSuccess {Boolean} disabled 
+     * @apiSuccess {String} displayName
+     * @apiSuccess {String} email
+     * @apiSuccess {Boolean} emailVerified 
+     * @apiSuccess {Object} metadata
+     * @apiSuccess {String} passwordHash
+     * @apiSuccess {String} passwordSalt
+     * @apiSuccess {String} phoneNumber
+     * @apiSuccess {String} photoURL
+     * @apiSuccess {String} providerData
+     * @apiSuccess {Array} tokensValidAfterTime
+     * @apiSuccess {String} uid
+     * @apiSuccess {String} name
+     * @apiSuccess {String} ngaySinh
+     * @apiSuccess {String} gioiTinh
+     * @apiSuccess {String} role
+     */
+    app.get('/users/all', (req, res) => {
+        userRecords = [];
+        function doneListingAllUsers() {
+            userReferences = userRecords.map(val => db.doc('users/' + val.uid));
+            db.getAll(userReferences).then(docs => {
+                userData = [];
+                docs.forEach((doc, index) => {
+                    userData.push({...userRecords[index], ...doc.data()});
+                });
+                res.send(userData);
+            })  
+            .catch(e => {
+                console.log(e);
+                res.status(400).send();
+            });         
+        }
+        function listAllUsers(nextPageToken) {
+            // List batch of users, 1000 at a time.
+            admin.auth().listUsers(1000, nextPageToken)
+              .then(function(listUsersResult) {
+                listUsersResult.users.forEach(function(userRecord) {
+                    userRecords.push(userRecord);
+                });
+                if (listUsersResult.pageToken) {
+                  // List next batch of users.
+                  return listAllUsers(listUsersResult.pageToken)
+                }
+                doneListingAllUsers();
+              })
+              .catch(function(error) {
+                console.log("Error listing users:", error);
+                return res.status(400).send();
+              });
+          }
+          // Start listing users from the beginning, 1000 at a time.
+        listAllUsers()
+
+    });
+    /**
+     * @api {get} /users Request User information
+     * @apiName GetUser
+     * @apiGroup User
+     *
+     * @apiParam {String} name Users name.
+     *
+     * @apiSuccess {Object} customClaims 
+     * @apiSuccess {Boolean} disabled 
+     * @apiSuccess {String} displayName
+     * @apiSuccess {String} email
+     * @apiSuccess {Boolean} emailVerified 
+     * @apiSuccess {Object} metadata
+     * @apiSuccess {String} passwordHash
+     * @apiSuccess {String} passwordSalt
+     * @apiSuccess {String} phoneNumber
+     * @apiSuccess {String} photoURL
+     * @apiSuccess {String} providerData
+     * @apiSuccess {Array} tokensValidAfterTime
+     * @apiSuccess {String} uid
+     * @apiSuccess {String} name
+     * @apiSuccess {String} ngaySinh
+     * @apiSuccess {String} gioiTinh
+     * @apiSuccess {String} role
      */
     app.get('/users', verifyIdTokenMiddleware, (req, res) => {
         let name = req.query.name;
@@ -59,7 +154,7 @@ module.exports = (app, admin) => {
             return admin.auth().getUser(query.docs[0].id)
         })
         .then(function(userRecord) {
-            merged = {...userRecord, ...data}            
+            merged = {...userRecord, ...data}; 
             res.send(merged);
         })
         .catch(function(error) {
@@ -67,15 +162,42 @@ module.exports = (app, admin) => {
             res.status(400).send();
         });
     });
-    /** Route for creating user
-     * @name POST /users
-     * @author fantasyinferno@gmail.com
-     * @function
-     * @memberof module: routers/users~usersRouter
-     * @inner
-     * @param {string} path - Express path
-     * @param {callback} middleware - Express middleware
-     */ 
+    /**
+     * @api {post} /users Create A User
+     * @apiName PostUser
+     * @apiGroup User
+     *
+     * @apiParam {Boolean} disabled If the user is disabled.
+     * @apiParam {String}  displayName The displayName of the user
+     * @apiParam {String}  email The user's email
+     * @apiParam {String}  emailVerified Whether the user's email is verified
+     * @apiParam {String}  password The user's password in plaintext
+     * @apiParam {String}  phoneNumber A valid phone number
+     * @apiParam {String}  photoURL The photo which will be taken as avatar
+     * @apiParam {String}  uid The id of the user. This will be generated if left unspecified
+     * @apiParam {String}  ngaySinh The user's birthdate
+     * @apiParam {String}  role The role of the user
+     * @apiParam {String}  name The username 
+     * @apiParam {String}  gioiTinh The user's gender
+     * 
+     * @apiSuccess {Object} customClaims The claims the user have on the database
+     * @apiSuccess {Boolean} disabled Whether the user is disabled
+     * @apiSuccess {String} displayName The displayname of the user
+     * @apiSuccess {String} email The user's email
+     * @apiSuccess {Boolean} emailVerified Whether the user's email is verified
+     * @apiSuccess {Object} metadata 
+     * @apiSuccess {String} passwordHash 
+     * @apiSuccess {String} passwordSalt 
+     * @apiSuccess {String} phoneNumber
+     * @apiSuccess {String} photoURL
+     * @apiSuccess {String} providerData
+     * @apiSuccess {Array} tokensValidAfterTime
+     * @apiSuccess {String} uid
+     * @apiSuccess {String} name
+     * @apiSuccess {String} ngaySinh
+     * @apiSuccess {String} gioiTinh
+     * @apiSuccess {String} role
+     */
     app.post('/users', (req, res) => {
         let body = req.body;
         let firebaseUserInfo = _.pick(body, ['disabled', 'displayName', 'email', 'emailVerified', 'password', 'phoneNumber', 'photoURL', 'uid']);
@@ -91,15 +213,6 @@ module.exports = (app, admin) => {
               res.status(400).send();
             });
     });
-    /** Route for updating user's information
-     * @name PATCH /users/:uid
-     * @author fantasyinferno@gmail.com
-     * @function
-     * @memberof module: routers/users~usersRouter
-     * @inner
-     * @param {string} path - Express path
-     * @param {callback} middleware - Express middleware
-     */
     app.patch('/users/:uid', (req, res) => {
         let uid = req.params.uid;
         let body = req.body;
@@ -117,15 +230,6 @@ module.exports = (app, admin) => {
               res.status(400).send();
             });
     });
-    /** Route for deleting a user
-     * @name DELETE /users/:uid
-     * @author fantasyinferno@gmail.com
-     * @function
-     * @memberof module: routers/users~usersRouter
-     * @inner
-     * @param {string} path - Express path
-     * @param {callback} middleware - Express middleware
-     */
     app.delete('/users/:uid', (req, res) => {
         let uid = req.params.uid;
         admin.auth().deleteUser(uid)
@@ -136,16 +240,6 @@ module.exports = (app, admin) => {
             console.log("Error deleting user:", error);
         });
     });
-    
-    /** Route for getting online users
-     * @name GET /users/online
-     * @author fantasyinferno@gmail.com
-     * @function
-     * @memberof module: routers/users~usersRouter
-     * @inner
-     * @param {string} path - Express path
-     * @param {callback} middleware - Express middleware
-     */
     app.get('/users/online', verifyIdTokenMiddleware, (req, res) => {
         db.collection('onlineUsers').where('isOnline', '==', true)
         .get()
@@ -169,15 +263,16 @@ module.exports = (app, admin) => {
             res.status(400).send();
         });
     });
-
-    /** Route for registering user's ip and port upon signing in
-     * @name POST /users/signin
-     * @author fantasyinferno@gmail.com
-     * @function
-     * @memberof module: routers/users~usersRouter
-     * @inner
-     * @param {string} path - Express path
-     * @param {callback} middleware - Express middleware
+    /**
+     * @api {post} /users/signin Sign In A User
+     * @apiName SignInUser
+     * @apiGroup User
+     *
+     * @apiParam {String} email User's email
+     * @apiParam {String} password User's password in plaintext
+     * 
+     * @apiSuccess {String} idToken The token of the user for signing in
+     * @apiSuccess {String} refreshToken The refresh token of the user
      */
     app.post('/users/signin', (req, res) => {
         let email = req.body.email;
@@ -209,14 +304,12 @@ module.exports = (app, admin) => {
             res.status(400).send();
         });
     });
-    /** Route for registering user's ip and port upon signing in
-     * @name POST /users/signout
-     * @author fantasyinferno@gmail.com
-     * @function
-     * @memberof module: routers/users~usersRouter
-     * @inner
-     * @param {string} path - Express path
-     * @param {callback} middleware - Express middleware
+    /**
+     * @api {post} /users/signout Sign Out  A User
+     * @apiName SignOutUser
+     * @apiGroup User
+     *
+     * @apiSuccess {String} timestamp The time at which the user's token is valid now
      */
     app.post('/users/signout', verifyIdTokenMiddleware, (req, res) => {
         // Revoke all refresh tokens for a specified user for whatever reason.
@@ -240,15 +333,6 @@ module.exports = (app, admin) => {
             res.status(400).send();
         });
     });
-    /** Route serving user's ip and port
-     * @name GET /users/ip/:email
-     * @author fantasyinferno@gmail.com
-     * @function
-     * @memberof module: routers/users~usersRouter
-     * @inner
-     * @param {string} path - Express path
-     * @param {callback} middleware - Express middleware
-     */
     app.get('/users/ip', (req, res) => {
         let email = req.query.email;
         admin.auth().getUserByEmail(email)
@@ -273,41 +357,4 @@ module.exports = (app, admin) => {
     app.get('/users/signup', (req, res) => {
         res.render('signup');
     });
-    /*
-    1. Determine the messaging process
-The user opens the app. The user sees a sign in screen.
-The user signs in and see a welcome message.
-The user sees her list of rooms.
-The user accesses one of the rooms.
-The user composes her message.
-The user presses "Send".
-The user closes the chat box.
-The user opens another chat box.
-The user composes her message.
-The user closes that chat box.
-The user proceeds to add a new friend.
-The user enters the a person's name to the search bar.
-The user sees the results appear as she types.
-The user click on one of the friend.
-The user sees his profile.
-The user presses the "add friend" button.
-The user closes the search bar.
-The user sees a new chat box appears.
-The user clicks on the chat box's setting.
-The user click "Block"
-The user proceeds to confirm the blocking.
-The user sees the new chat box disappears.
-The user logs out.
-2. List the routers that are needed
-POST /users/signin
-GET /rooms/my
-GET /rooms/:id
-POST /rooms/:id
-GET /users?searchString=[searchString]
-GET /users/:id
-POST /users/friends
-POST /users/blocks
-POST /users/signout
-3. Implement the routers
-    */
 };

@@ -80,6 +80,19 @@ describe('Test authentication', function() {
   //   }).timeout(6000);
   // })
   describe('Test getting user data', () => {
+    it('should get all user data', (done) => {
+      chai.request(app)
+      .get('/users/all')
+      .then((res) => {
+        res.status.should.equal(200);
+        should.exist(res.body);
+        res.body.should.be.a('array');
+        done();
+      })
+      .catch(err => {
+        done(err);
+      }); 
+    }).timeout(10000);
     it('should respond with user data', (done) => {
       chai.request(signInUrl)
       .post('')

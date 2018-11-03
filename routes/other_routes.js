@@ -12,4 +12,9 @@ module.exports = (app, admin) => {
     app.get('/', (req, res) => {
         res.render('homepage');
     });
+    app.get('/docs', (req, res) => {
+        res.sendFile('index.html', {
+            root: './public/doc'
+        });
+    })
 }

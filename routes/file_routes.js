@@ -21,14 +21,14 @@ module.exports = (app, admin) => {
     const {verifyIdTokenMiddleware} = require('./middlewares')(app, admin);    
     let db = admin.firestore();
     let bucket = admin.storage().bucket();
-    /** Upload a file onto the storage
-     * @name POST /files
-     * @author fantasyinferno@gmail.com
-     * @function
-     * @memberof module: routers/users~usersRouter
-     * @inner   
-     * @param {string} path - Express path
-     * @param {callback} middleware - Express middleware
+    /** 
+     * @api {post} /files Uploading files to the server
+     * @apiName PostFile
+     * @apiGroup File
+     * 
+     * @apiDescription This API endpoint allows users to upload files, by appending a file with the key "attachment"
+     * into their FormData and sent it to the server.
+     * @apiSuccess {String} fileUrl The url of the uploaded file
      */
     app.post('/files', upload.single('attachment'), (req, res) => {
 
