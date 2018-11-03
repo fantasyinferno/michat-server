@@ -200,7 +200,14 @@ module.exports = (app, admin) => {
     app.post('/users', (req, res) => {
         let body = req.body;
         let firebaseUserInfo = _.pick(body, ['disabled', 'displayName', 'email', 'emailVerified', 'password', 'phoneNumber', 'photoURL', 'uid']);
-        let additionalUserInfo = _.pick(body, ['ngaySinh', 'role', 'name', 'gioiTinh']);
+        let additionalUserInfo = {
+            'ngaySinh': '',
+            'role': '',
+            'name': firebaseUserInfo.displayName,
+            'gioiTinh': '',
+        };
+        neoAdditionalUserInfo = _.pick(body, ['ngaySinh', 'role', 'name', 'gioiTinh']);
+        additionalUserInfo = _.assign(additionalUserInfo, neoAdditionalUserInfo);
         admin.auth().createUser(firebaseUserInfo)
             .then(function(userRecord) {
                 db.collection('users').doc(userRecord.uid)

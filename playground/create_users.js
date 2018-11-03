@@ -6,7 +6,7 @@ for (let i = 0; i < 20; ++i) {
     let username = `user${i}`;
     axios.delete('https://o-michat.herokuapp.com/users', {
         params: {
-            name: username,            
+            name: username,
         }
     })
     .then(res => {
