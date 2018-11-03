@@ -14,8 +14,8 @@ describe('Test authentication', function() {
       .post('/users/signin')
       .set('Content-Type', 'application/json')
       .send({
-        email: 'napoleon@france.com',
-        password: 'napoleon',
+        email: 'quanghuy@gmail.com',
+        password: 'quanghuy',
       })
       .then(res => {
         res.status.should.equal(200);
@@ -31,8 +31,8 @@ describe('Test authentication', function() {
       .post('/users/signin')
       .set('Content-Type', 'application/json')
       .send({
-        email: 'napoleon@france.com',
-        password: 'napoleon',
+        email: 'quanghuy@gmail.com',
+        password: 'quanghuy',
       })
       .then(res => {
         res.status.should.equal(200);
@@ -86,7 +86,7 @@ describe('Test authentication', function() {
       .then((res) => {
         res.status.should.equal(200);
         should.exist(res.body);
-        res.body.should.be.a('array');
+        res.body.users.should.be.a('array');
         done();
       })
       .catch(err => {
@@ -130,8 +130,8 @@ describe('Test authentication', function() {
       .post('')
       .set('Content-Type', 'application/json')
       .send({
-        "email": "tuankiet@gmail.com",
-        "password": "tuankiet",
+        "email": "quanghuy@gmail.com",
+        "password": "quanghuy",
         "returnSecureToken": true
       })
       .then((res) => {
@@ -165,8 +165,8 @@ describe('Test authentication', function() {
         .post('')
         .set('Content-Type', 'application/json')
         .send({
-          "email": "napoleon@france.com",
-          "password": "napoleon",
+          "email": "quanghuy@gmail.com",
+          "password": "quanghuy",
           "returnSecureToken": true
         })
         .then((res) => {
@@ -194,8 +194,8 @@ describe('Test authentication', function() {
       .post('')
       .set('Content-Type', 'application/json')
       .send({
-        "email": "napoleon@france.com",
-        "password": "napoleon",
+        "email": "quanghuy@gmail.com",
+        "password": "quanghuy",
         "returnSecureToken": true
       })
       .then((res) => {
@@ -204,7 +204,7 @@ describe('Test authentication', function() {
         let idToken = res.body.idToken;
         idToken.should.be.a('string');
         return chai.request(app)
-        .get('/users/ip?email=napoleon@france.com')
+        .get('/users/ip?email=quanghuy@gmail.com')
         .set('Access-Token', idToken);
       })
       .then((res) => {
@@ -222,8 +222,8 @@ describe('Test authentication', function() {
       .post('')
       .set('Content-Type', 'application/json')
       .send({
-        "email": "napoleon@france.com",
-        "password": "napoleon",
+        "email": "quanghuy@gmail.com",
+        "password": "quanghuy",
         "returnSecureToken": true
       })
       .then((res) => {

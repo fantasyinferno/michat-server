@@ -87,7 +87,7 @@ module.exports = (app, admin) => {
                 docs.forEach((doc, index) => {
                     userData.push({...userRecords[index], ...doc.data()});
                 });
-                res.send(userData);
+                res.send({users: userData});
             })  
             .catch(e => {
                 console.log(e);
@@ -114,7 +114,6 @@ module.exports = (app, admin) => {
           }
           // Start listing users from the beginning, 1000 at a time.
         listAllUsers()
-
     });
     /**
      * @api {get} /users Request User information
@@ -229,6 +228,22 @@ module.exports = (app, admin) => {
               console.log("Error updating user:", error);
               res.status(400).send();
             });
+    });
+    app.delete('/users', (req, res) => {
+        name = req.query.name;
+        db.collection('users').where('name', '==', name)
+        .get()
+        .then((res) => {
+            let uid = res[0].doc().id;
+            return admin.auth().deleteUser(uid)
+        })
+        .then(() => {
+            return res.send();
+        })
+        .catch(e => {
+            console.log(e);
+            res.status(400).send();
+        });
     });
     app.delete('/users/:uid', (req, res) => {
         let uid = req.params.uid;
