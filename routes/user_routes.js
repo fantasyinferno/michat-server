@@ -315,9 +315,9 @@ module.exports = (app, admin) => {
             // }
             // db.collection('users').doc(uid).set(networkInformation, { merge: true });
             // db.collection('onlineUsers').doc(uid).set({isOnline: true}, {merge: true});
-            db.collection('onlineUsers').doc(response.data.uid).set({
-                isOnline: false,
-            }, {merge: true});
+            // db.collection('onlineUsers').doc(response.data.uid).set({
+            //     isOnline: false,
+            // }, {merge: true});
             res.send({
                 idToken: response.data.idToken,
                 refreshToken: response.data.refreshToken,
