@@ -9,7 +9,7 @@ for (let i = 0; i < 20; ++i) {
         displayName: username,
         email: username + '@gmail.com',
         emailVerified: false,
-        password: username,
+        password: '123456',
         photoURL: 'https://news.nationalgeographic.com/content/dam/news/2018/05/17/you-can-train-your-cat/02-cat-training-NationalGeographic_1484324.ngsversion.1526587209178.adapt.1900.1.jpg',
         ngaySinh: `${i}/01/1998`,
         role: 'friend',
